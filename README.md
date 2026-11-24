@@ -18,7 +18,7 @@ The library is exposed as `_G.TavernersCore`.
 - `TavernersCore.version`, `protocolVersion`, `loaded`
 - `TavernersCore.Theme`: shared gold, parchment, muted, green, red and panel colours.
 - `TavernersCore.Identity:GetPlayer()`: current name, realm, class and stable character key.
-- `TavernersCore.Identity:GetKey(name, realm)`, `ShortName(name)`, `SameCharacter(a,b)`.
+- `TavernersCore.Identity:GetKey(name, realm)`, `ShortName(name)`, `SameCharacter(a,b)`.\n- `TavernersCore.Profiles:Ensure(db, player)`, `GetMainKey(db,key)`, `GetAltKeys(db,key)`, `Link(db,alt,main)`, `Unlink(db,alt)`.\n- `TavernersCore.Guild:RefreshRoster()` and `IsOnline(characterName)` for guild roster presence.
 - `TavernersCore.Database:Register(savedVariableName, defaults, version)`, `Get(name)`, `Wipe(name)`.
 - `TavernersCore.Comm:Register(prefix, handler)`, `On(prefix, handler)`, `Send(prefix, message, channel, target)`.
 - `TavernersCore.Notifications:Print(message)`, `Toast(message)`.
