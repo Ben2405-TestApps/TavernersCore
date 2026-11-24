@@ -94,6 +94,66 @@ function Core.Database:Wipe(name)
   return true
 end
 
+Core.Profiles = {}
+function Core.Profiles:Ensure(db, player)
+  if type(db) ~= "table" then return nil end
+  player = player or Core.Identity:GetPlayer()
+  db.profiles = db.profiles or {}
+  local key = player.key or Core.Identity:GetKey(player.name, player.realm)
+  local profile = db.profiles[key]
+  if type(profile) ~= "table" then
+    profile = {key=key, name=player.name, realm=player.realm, class=player.class, professions={}, recipes={}}
+    db.profiles[key] = profile
+  end
+  profile.key, profile.name, profile.realm = key, profile.name or player.name, profile.realm or player.realm
+  profile.professions, profile.recipes = profile.professions or {}, profile.recipes or {}
+  return profile, key
+end
+function Core.Profiles:GetMainKey(db, key)
+  local links, seen = (db and db.altLinks) or {}, {}
+  while links[key] and not seen[key] do seen[key] = true; key = links[key] end
+  return key
+end
+function Core.Profiles:GetAltKeys(db, mainKey)
+  local result = {}
+  mainKey = self:GetMainKey(db, mainKey)
+  for alt, target in pairs((db and db.altLinks) or {}) do
+    if self:GetMainKey(db, target) == mainKey then result[#result + 1] = alt end
+  end
+  table.sort(result)
+  return result
+end
+function Core.Profiles:Link(db, altKey, mainKey)
+  if type(db) ~= "table" or not altKey or not mainKey or altKey == mainKey then return false end
+  db.altLinks = db.altLinks or {}
+  db.altLinks[altKey] = self:GetMainKey(db, mainKey)
+  return true
+end
+function Core.Profiles:Unlink(db, altKey)
+  if type(db) ~= "table" or type(db.altLinks) ~= "table" then return false end
+  db.altLinks[altKey] = nil
+  return true
+end
+
+Core.Guild = {online = {}}
+function Core.Guild:RefreshRoster()
+  self.online = {}
+  if not IsInGuild or not IsInGuild() or not GetNumGuildMembers or not GetGuildRosterInfo then return self.online end
+  for i = 1, GetNumGuildMembers() do
+    local name, _, _, _, _, _, _, _, online = GetGuildRosterInfo(i)
+    if name then
+      local short = Core.Identity:ShortName(name)
+      self.online[short] = online and true or false
+      self.online[name:lower()] = online and true or false
+    end
+  end
+  return self.online
+end
+function Core.Guild:IsOnline(name)
+  local short = Core.Identity:ShortName(name)
+  return short and self.online and (self.online[short] or self.online[tostring(name):lower()]) or false
+end
+
 Core.Config = {}
 function Core.Config:Get(db, key, fallback)
   if type(db) ~= "table" then return fallback end
@@ -113,7 +173,7 @@ function Core.Notifications:Print(message, color)
   local text = tostring(message or "")
   if color and type(color) == "table" then
     local r, g, b = color[1] or 1, color[2] or 1, color[3] or 1
-    text = string.format("|cff%02x%02x%02x%s|r", r*255, g*255, b*255, text)
+    text = string.format("|cff%02x%02x%02x%s|r", math.floor(r*255), math.floor(g*255), math.floor(b*255), text)
   end
   if DEFAULT_CHAT_FRAME and DEFAULT_CHAT_FRAME.AddMessage then
     DEFAULT_CHAT_FRAME:AddMessage(prefix .. text)
