@@ -64,7 +64,7 @@ Keep shared behaviour in Core and addon-specific data/business logic in the cons
 
 - Added a shared settings registry and `/tsettings` window for registered module preferences.
 - Added an internal event bus for addon-to-addon refresh and state notifications.
-- Added table-based snapshot/restore primitives for registered SavedVariables stores. These are developer-facing APIs; a user-facing portable backup/import workflow is not yet exposed.
+- Added table-based snapshot/restore primitives for registered SavedVariables stores. At 1.2.0 these were developer-facing APIs; 1.3.0 adds the user-facing portable backup/import workflow.
 - Added module status reporting for Guild Hall and diagnostics integrations.
 
 Settings currently appear when installed addons register them. The window currently edits boolean and numeric preferences.
