@@ -1,6 +1,6 @@
 # Taverners Core
 
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Interface target:** 16001 (verify against the current WoW Forever client)
 
 Taverners Core is the shared runtime library for addons maintained by The Taverners Guild. It centralises common services so each addon does not need to maintain its own copy.
@@ -11,6 +11,20 @@ Taverners Core is the shared runtime library for addons maintained by The Tavern
 2. Install any Taverners addon that declares TavernersCore as a required dependency.
 3. Ensure TavernersCore is enabled in the AddOns list. WoW loads required dependencies first.
 
+## In-game diagnostics
+
+Type `/tcore` or `/tavdiagnostics` to open the diagnostics window.
+
+The window includes:
+- Core version, protocol version, game build and current character details.
+- A dependency scan that finds addons declaring TavernersCore as a dependency, reports whether they loaded, and lists any missing dependencies they require.
+- Registered communication prefixes and queued messages.
+- Registered Taverners modules.
+- The latest 12 local diagnostic log entries.
+- Refresh and verbose-logging controls.
+
+The dependency scan checks addon metadata exposed by the game client. Addons marked load-on-demand may correctly appear as not loaded until requested. The report stays on the local client and is not transmitted.
+
 ## Public API
 
 The library is exposed as `_G.TavernersCore`.
@@ -18,12 +32,14 @@ The library is exposed as `_G.TavernersCore`.
 - `TavernersCore.version`, `protocolVersion`, `loaded`
 - `TavernersCore.Theme`: shared gold, parchment, muted, green, red and panel colours.
 - `TavernersCore.Identity:GetPlayer()`: current name, realm, class and stable character key.
-- `TavernersCore.Identity:GetKey(name, realm)`, `ShortName(name)`, `SameCharacter(a,b)`.\n- `TavernersCore.Profiles:Ensure(db, player)`, `GetMainKey(db,key)`, `GetAltKeys(db,key)`, `Link(db,alt,main)`, `Unlink(db,alt)`.\n- `TavernersCore.Guild:RefreshRoster()` and `IsOnline(characterName)` for guild roster presence.
+- `TavernersCore.Identity:GetKey(name, realm)`, `ShortName(name)`, `SameCharacter(a,b)`.
+- `TavernersCore.Profiles:Ensure(db, player)`, `GetMainKey(db,key)`, `GetAltKeys(db,key)`, `Link(db,alt,main)`, `Unlink(db,alt)`.
+- `TavernersCore.Guild:RefreshRoster()` and `IsOnline(characterName)` for guild roster presence.
 - `TavernersCore.Database:Register(savedVariableName, defaults, version)`, `Get(name)`, `Wipe(name)`.
 - `TavernersCore.Comm:Register(prefix, handler)`, `On(prefix, handler)`, `Send(prefix, message, channel, target)`.
 - `TavernersCore.Notifications:Print(message)`, `Toast(message)`.
 - `TavernersCore.Config:Get(db,key,fallback)`, `Set(db,key,value)`.
-- `TavernersCore.Diagnostics:Log(level,message)`, `Enable(bool)`, `GetReport()`.
+- `TavernersCore.Diagnostics:Log(level,message)`, `Enable(bool)`, `GetReport()`, `CheckDependencies()`, `BuildText()`, `Show()`.
 - `TavernersCore.Util:SafeText(value)`, `Split(value, separator)`, `Now()`, `SafeCall(fn,...)`.
 
 ## Communication
