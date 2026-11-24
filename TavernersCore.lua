@@ -32,7 +32,7 @@ function Core.Util:Split(value, separator)
   local out = {}
   separator = separator or "|"
   if type(value) ~= "string" then return out end
-  local pattern = "([^" .. separator .. "]*)"
+  local pattern = "(.-)"
   for part in (value .. separator):gmatch(pattern .. separator) do out[#out + 1] = part end
   return out
 end
@@ -49,7 +49,7 @@ local function PlayerNameRealm()
 end
 function Core.Identity:GetPlayer()
   local name, realm = PlayerNameRealm()
-  local _, class = type(UnitClass) == "function" and UnitClass("player") or nil, nil
+  local class
   if type(UnitClass) == "function" then local _, c = UnitClass("player"); class = c end
   return {name=name, realm=realm, class=class, key=name .. "-" .. realm}
 end
