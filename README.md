@@ -1,6 +1,6 @@
 # Taverners Core
 
-**Version:** 1.1.0  
+**Version:** 1.3.0  
 **Interface target:** 16001 (verify against the current WoW Forever client)
 
 Taverners Core is the shared runtime library for addons maintained by The Taverners Guild. It centralises common services so each addon does not need to maintain its own copy.
@@ -68,3 +68,15 @@ Keep shared behaviour in Core and addon-specific data/business logic in the cons
 - Added module status reporting for Guild Hall and diagnostics integrations.
 
 Settings currently appear when installed addons register them. The window currently edits boolean and numeric preferences.
+
+
+## Portable backup and restore (1.3.0)
+
+- Added `/tbackup`, a user-facing backup and restore window.
+- Export creates a portable plain-text snapshot of all SavedVariables stores registered by currently loaded Taverners addons.
+- Import validates the format, record count, nesting and value types before changing any registered store.
+- Import treats the backup as data; it does not execute Lua, use `loadstring`, or accept arbitrary code.
+- Only stores registered by installed Taverners addons are restored; unrelated stores in an imported file are ignored.
+- Backups are manual local text exports. No cloud service or automatic remote storage is used.
+
+After restoring, reopen module windows or use their refresh commands to update displayed information.
