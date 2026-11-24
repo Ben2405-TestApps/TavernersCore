@@ -2,7 +2,8 @@
 ## Title: Taverners Core
 ## Notes: Shared library and services for The Taverners Guild addon family.
 ## Author: The Taverners Guild
-## Version: 1.0.0
+## Version: 1.1.0
 ## X-Category: Libraries
 ## X-License: MIT
 TavernersCore.lua
+DiagnosticsUI.lua
