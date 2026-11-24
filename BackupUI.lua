@@ -101,7 +101,9 @@ function Core.Backup:ParseText(source)
   end
   local lines = Split(source, "\n")
   if lines[1] ~= "TAVERNERS-BACKUP|1" then return nil, "Unrecognised Taverners backup format." end
-  local snapshot = {created=0, protocol=1, stores={}}
+  local created = tonumber((lines[2] or ""):match("^CREATED|(%d+)$")) or 0
+  local protocol = tonumber((lines[3] or ""):match("^PROTOCOL|(%d+)$")) or 1
+  local snapshot = {created=created, protocol=protocol, stores={}}
   local count = 0
   for index = 4, #lines do
     local storeToken, pathText, kind, value = lines[index]:match("^T|([^|]*)|([^|]*)|([^|]*)|(.*)$")
@@ -195,7 +197,6 @@ local function Build()
   Button("Restore backup", 322, function()
     local ok, message = Core.Backup:RestoreText(edit:GetText())
     status:SetText(ok and ("Restore complete. " .. message .. " Reopen module windows to refresh.") or (message or "Restore failed."))
-    if ok then Core.Events:Emit("BACKUP_RESTORED") end
   end)
   Button("Clear", 474, function() edit:SetText(""); status:SetText("") end)
 end
