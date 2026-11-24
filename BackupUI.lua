@@ -106,6 +106,7 @@ function Core.Backup:ParseText(source)
   local snapshot = {created=created, protocol=protocol, stores={}}
   local count = 0
   for index = 4, #lines do
+    if lines[index] ~= "" then
     local storeToken, pathText, kind, value = lines[index]:match("^T|([^|]*)|([^|]*)|([^|]*)|(.*)$")
     if not storeToken then return nil, "Invalid backup record on line " .. index .. "." end
     local storeName = Decode(storeToken)
@@ -142,6 +143,7 @@ function Core.Backup:ParseText(source)
     else return nil, "Unknown value type on line " .. index .. "." end
     count = count + 1
     if count > 10000 then return nil, "Backup contains too many records." end
+    end
   end
   local accepted = 0
   for name in pairs(snapshot.stores) do
