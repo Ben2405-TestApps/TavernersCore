@@ -4,7 +4,7 @@ local ADDON, Core = ...
 Core = Core or {}
 _G.TavernersCore = Core
 Core.name = ADDON or "TavernersCore"
-Core.version = "1.0.0"
+Core.version = "1.2.0"
 Core.protocolVersion = 1
 Core.modules = Core.modules or {}
 
@@ -276,3 +276,103 @@ frame:SetScript("OnEvent", function(_, event, ...)
     if Core.prefixes[prefix] then Core.Comm:Dispatch(prefix, message, channel, sender) end
   end
 end)
+
+
+-- Shared settings registry. Addons register their saved-variable table and
+-- expose settings without each module having to build a separate framework.
+Core.Settings = {registry = {}}
+function Core.Settings:Register(moduleName, db, definitions)
+  if type(moduleName) ~= "string" or type(db) ~= "table" then return false end
+  self.registry[moduleName] = {db=db, definitions=definitions or {}}
+  return true
+end
+function Core.Settings:Get(moduleName, key, fallback)
+  local entry = self.registry[moduleName]
+  if not entry then return fallback end
+  local value = entry.db[key]
+  if value == nil then return fallback end
+  return value
+end
+function Core.Settings:Set(moduleName, key, value)
+  local entry = self.registry[moduleName]
+  if not entry or type(key) ~= "string" then return false end
+  local definition = entry.definitions[key]
+  if definition and definition.validate then
+    local ok, accepted = pcall(definition.validate, value)
+    if not ok or not accepted then return false end
+  end
+  entry.db[key] = value
+  if Core.Events then Core.Events:Emit("SETTING_CHANGED", moduleName, key, value) end
+  return true
+end
+function Core.Settings:Reset(moduleName)
+  local entry = self.registry[moduleName]
+  if not entry then return false end
+  for key, definition in pairs(entry.definitions) do
+    if definition.default ~= nil then entry.db[key] = definition.default end
+  end
+  if Core.Events then Core.Events:Emit("SETTINGS_RESET", moduleName) end
+  return true
+end
+
+-- Lightweight internal event bus for cross-addon refreshes and integrations.
+Core.Events = {listeners = {}}
+function Core.Events:On(eventName, owner, callback)
+  if type(eventName) ~= "string" or type(callback) ~= "function" then return false end
+  self.listeners[eventName] = self.listeners[eventName] or {}
+  self.listeners[eventName][owner or callback] = callback
+  return true
+end
+function Core.Events:Off(eventName, owner)
+  if self.listeners[eventName] then self.listeners[eventName][owner] = nil end
+end
+function Core.Events:Emit(eventName, ...)
+  for _, callback in pairs(self.listeners[eventName] or {}) do
+    SafeCall(callback, ...)
+  end
+end
+
+-- Snapshot/restore primitives are deliberately table-based. Addons can build
+-- a user-facing export format on top without executing imported Lua code.
+Core.Backup = {}
+local function CopyTable(source, seen)
+  if type(source) ~= "table" then return source end
+  seen = seen or {}
+  if seen[source] then return nil end
+  seen[source] = true
+  local copy = {}
+  for key, value in pairs(source) do
+    if type(key) ~= "function" and type(value) ~= "function" then
+      copy[CopyTable(key, seen)] = CopyTable(value, seen)
+    end
+  end
+  seen[source] = nil
+  return copy
+end
+function Core.Backup:CreateSnapshot()
+  local snapshot = {created=Core.Util:Now(), protocol=Core.protocolVersion, stores={}}
+  for name, store in pairs(Core.Database.stores or {}) do
+    snapshot.stores[name] = CopyTable(store)
+  end
+  return snapshot
+end
+function Core.Backup:RestoreSnapshot(snapshot)
+  if type(snapshot) ~= "table" or type(snapshot.stores) ~= "table" then return false, "Invalid snapshot." end
+  for name, saved in pairs(snapshot.stores) do
+    local current = Core.Database.stores[name]
+    if current and type(saved) == "table" then
+      for key in pairs(current) do current[key] = nil end
+      for key, value in pairs(CopyTable(saved) or {}) do current[key] = value end
+    end
+  end
+  Core.Events:Emit("BACKUP_RESTORED", snapshot.created)
+  return true
+end
+
+function Core:GetModuleStatus()
+  local result = {}
+  for name, module in pairs(self.modules or {}) do
+    result[name] = {loaded=true, version=module.VERSION or module.version or "unknown"}
+  end
+  return result
+end
