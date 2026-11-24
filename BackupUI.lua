@@ -117,6 +117,7 @@ function Core.Backup:ParseText(source)
         local key = ReadKey(token)
         if key == nil then return nil, "Invalid table key on line " .. index .. "." end
         path[#path + 1] = key
+        if #path > 20 then return nil, "Backup nesting exceeds 20 levels on line " .. index .. "." end
       end
     end
     local root = snapshot.stores[storeName]
